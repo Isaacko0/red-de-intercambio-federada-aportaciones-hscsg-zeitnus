@@ -46,6 +46,7 @@
 42. [Diseno: Perfiles de Nodo con Prohibiciones Compartidas](diseno-perfiles-nodo-productos-prohibidos.md) - Perfiles dinamicos (adventista, ISKCON, etc.) con prohibiciones de productos compartidas via federation
 43. [Guia: Perfiles de Nodo y Productos Prohibidos](guia-perfiles-nodo.md) - Para admin: como configurar perfil del nodo, marcar productos prohibidos, y compartir con otros nodos
 44. [Cosateca y Objetoteca](cosateca-objetoteca.md) - Biblioteca comunitaria de objetos y herramientas: prestamos, mantenimiento y aportaciones reconocidas en TQ, con disenos referenciados desde el OAD de Integral (loop CDS→OAD→COS→ITC→FRS)
+45. [Registro de cambios: Cosateca / Objetoteca](CAMBIOS_COSATECA_OBJETOTECA.md) - Registro exhaustivo de todos los cambios realizados, archivos creados/modificados, decisiones de diseño, verificaciones y limitaciones.
 
 ## Estado de Implementacion
 
