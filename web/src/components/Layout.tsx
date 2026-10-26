@@ -8,7 +8,7 @@ import {
   Home, ArrowLeftRight, History, Package, Calculator, Store, Clock,
   Network, Scale, Users, Gavel, FileSearch, Globe, UserPlus, Wallet, Shield,
   Building2, Nfc, Settings, User, PiggyBank, Zap, Plug,
-  Tool,
+  Box,
   LogOut, Menu, X, ExternalLink, Bell, ChevronLeft, ChevronRight, AlertTriangle,
   Server, ShoppingBag, SlidersHorizontal, ScrollText, Languages,
 } from 'lucide-react'
@@ -29,7 +29,7 @@ const navItems: { to: string; labelKey: string; icon: any; perm?: string; end?: 
   { to: '/app/nfc-drivers', labelKey: 'nav.nfc_drivers', icon: Package, perm: 'nfc.issue_card' },
   { to: '/app/my-terminals', labelKey: 'nav.my_terminals', icon: ShoppingBag },
   { to: '/app/products', labelKey: 'nav.products', icon: Package },
-  { to: '/app/cosateca', labelKey: 'nav.cosateca', icon: Tool },
+  { to: '/app/cosateca', labelKey: 'nav.cosateca', icon: Box },
   { to: '/app/calculator', labelKey: 'nav.calculator', icon: Calculator },
   { to: '/app/calculator/params', labelKey: 'nav.calculator_params', icon: Zap, perm: 'calculator.manage_params' },
   { to: '/app/store', labelKey: 'nav.store', icon: Store },

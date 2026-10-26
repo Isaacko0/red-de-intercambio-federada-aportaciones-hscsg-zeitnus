@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,7 +11,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"federated-credit-node/internal/ledger"
@@ -228,13 +226,15 @@ func (h *CosatecaHandler) createObject(w http.ResponseWriter, r *http.Request) {
 		req.Status = "disponible"
 	}
 
-	bm, _ := json.Marshal(req.BillOfMaterials)
-	imgs, _ := json.Marshal(req.Images)
-
-	var bmJSON pgtype.JSONB
-	_ = bmJSON.Set(bm)
-	var imgsJSON pgtype.JSONB
-	_ = imgsJSON.Set(imgs)
+	var bm, imgs string
+	if len(req.BillOfMaterials) > 0 {
+		b, _ := json.Marshal(req.BillOfMaterials)
+		bm = string(b)
+	}
+	if len(req.Images) > 0 {
+		b, _ := json.Marshal(req.Images)
+		imgs = string(b)
+	}
 
 	var id uuid.UUID
 	err = h.Pool.QueryRow(r.Context(), `
@@ -245,8 +245,8 @@ func (h *CosatecaHandler) createObject(w http.ResponseWriter, r *http.Request) {
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		RETURNING id`,
 		h.NodeDomain, req.Name, req.Description, req.Category, req.Condition, req.Status,
-		req.Location, req.DesignRef, req.DesignVersion, bmJSON, req.TQValue,
-		req.AccessTQCost, userID, req.FederatedVisible, imgsJSON).Scan(&id)
+		req.Location, req.DesignRef, req.DesignVersion, bm, req.TQValue,
+		req.AccessTQCost, userID, req.FederatedVisible, imgs).Scan(&id)
 	if err != nil {
 		writeError(w, 500, "error creando objeto")
 		return
@@ -928,6 +928,7 @@ func (h *CosatecaHandler) creditContribution(w http.ResponseWriter, r *http.Requ
 		"contributor_id":  contributorID,
 		"object_domain":   h.NodeDomain,
 	}
+	metadataJSON, _ := json.Marshal(metadata)
 
 	var txID uuid.UUID
 	err = tx.QueryRow(r.Context(), `

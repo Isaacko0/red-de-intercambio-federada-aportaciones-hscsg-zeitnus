@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { usePermissions } from '../hooks/usePermissions'
-import { Plus, Edit2, Trash2, Check, X, Clock, Loader2, Search, Filter, Tool, CreditCard, RefreshCw } from 'lucide-react'
+import { Plus, Edit2, Trash2, Check, X, Clock, Loader2, Search, Filter, Box, CreditCard, RefreshCw } from 'lucide-react'
 import { fmtTQ } from '../lib/format'
 
 type CosatecaObject = {
@@ -492,7 +492,7 @@ export default function Cosateca() {
                   <input
                     type="number"
                     value={form.tq_value}
-                    onChange={(e) => setForm({ ...form, tq_value: e.target.value })}
+                    onChange={(e) => setForm({ ...form, tq_value: Number(e.target.value) || 0 })}
                     className="w-full py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-trueque-500"
                   />
                   <span className="text-xs text-muted-foreground">TQ</span>
