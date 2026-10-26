@@ -259,9 +259,35 @@
       "blocks": [],
       "status": "pending",
       "notes": "Web UI: slider miembros, aportación, yield esperado, inflación. Output: gráfica percentiles + tabla decenal. Compartible con comunidad."
-    }
-  ],
-  "userPriorities": [],
+      },
+      {
+        "id": "INTEGRACION_HSCSG-cosateca",
+        "title": "Modulo Cosateca/Objetoteca: objetos, prestamos, mantenimiento y aportaciones TQ (API, migracion, frontend, docs)",
+        "workstream": "INTEGRACION_HSCSG",
+        "source": "agent",
+        "priority": 55,
+        "effort": 4,
+        "value": 80,
+        "dependencies": [],
+        "blocks": [],
+        "status": "done",
+        "notes": "Backend Go: internal/api/cosateca.go (11 endpoints autenticados), migration 171_cosateca_schema.sql, TxTypeCosatecaContribution en internal/ledger/transaction.go. Frontend: pagina /app/cosateca, locales es/en, item de nav. Docs: docs/cosateca-objetoteca.md + entrada en docs/INDEX.md. Mapea OAD/COS/FRS de Integral y TQ de Ecoaldeas Federadas; ITC y TQ no se tratan como equivalentes."
+      },
+      {
+        "id": "INTEGRACION_HSCSG-cosateca-federacion",
+        "title": "Sincronizar catalogo de objetos cosateca entre nodos federados (gossip)",
+        "workstream": "INTEGRACION_HSCSG",
+        "source": "agent",
+        "priority": 30,
+        "effort": 6,
+        "value": 70,
+        "dependencies": ["INTEGRACION_HSCSG-cosateca"],
+        "blocks": [],
+        "status": "pending",
+        "notes": "Usar columna federated_visible + gossip existente. Pendiente despues del modulo base."
+      }
+      ],
+      "userPriorities": [],
   "lastUpdated": "2026-09-06T23:15:00Z",
   "metadata": {
     "repo": "red-de-intercambio-federada-isaacko",

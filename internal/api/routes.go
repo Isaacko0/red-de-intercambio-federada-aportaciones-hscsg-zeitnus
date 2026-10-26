@@ -296,6 +296,12 @@ func NewRouterWithAuthAndBasePath(h *Handler, ah *AuthHandlers, fh *FederationHa
 	communityWorkH := &CommunityWorkHandler{Pool: pool, NodeDomain: h.nodeDomain}
 	communityWorkH.RegisterRoutes(r, am)
 
+	// Cosateca / Objetoteca: biblioteca comunitaria de objetos y herramientas
+	// compartidas (OAD: disenos certificados; COS: prestamos y mantenimiento;
+	// TQ: aportaciones reconocidas en TQ por la asamblea del nodo).
+	cosatecaH := &CosatecaHandler{Pool: pool, NodeDomain: h.nodeDomain}
+	cosatecaH.RegisterRoutes(r, am)
+
 	// Merge conflicts: conflictos de fusion entre nodos
 	mergeH := &MergeConflictHandler{Pool: pool, Auth: am, nodeDomain: h.nodeDomain}
 	mergeH.RegisterRoutes(r, am)

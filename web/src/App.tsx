@@ -13,6 +13,7 @@ import Transfer from './pages/Transfer'
 import Wallet from './pages/Wallet'
 import MyServices from './pages/MyServices'
 import Products from './pages/Products'
+import Cosateca from './pages/Cosateca'
 import Calculator from './pages/Calculator'
 import Store from './pages/Store'
 import FederationLimits from './pages/FederationLimits'
@@ -170,6 +171,7 @@ function AppInner() {
         <Route path="/app/history" element={<PendingAdmissionGuard><Layout><Wallet /></Layout></PendingAdmissionGuard>} />
         <Route path="/app/payments" element={<PendingAdmissionGuard><Layout><Payments /></Layout></PendingAdmissionGuard>} />
         <Route path="/app/products" element={<PendingAdmissionGuard><Layout><Products /></Layout></PendingAdmissionGuard>} />
+        <Route path="/app/cosateca" element={<PendingAdmissionGuard><Layout><Cosateca /></Layout></PendingAdmissionGuard>} />
         <Route path="/app/calculator" element={<PendingAdmissionGuard><Layout><Calculator /></Layout></PendingAdmissionGuard>} />
         <Route path="/app/store" element={<PendingAdmissionGuard><Layout><Store /></Layout></PendingAdmissionGuard>} />
         <Route path="/app/federation/limits" element={<PendingAdmissionGuard><Layout><FederationLimits /></Layout></PendingAdmissionGuard>} />

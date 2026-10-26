@@ -30,6 +30,7 @@ Cada nodo opera de forma independiente y se federa con otros nodos via protocolo
 - **Comercio externo**: puente con moneda fiat externa
 - **Recuperacion de cuentas**: via claves de recuperacion
 - **Sitio web publico**: cada nodo tiene su pagina web publica configurable
+- **Cosateca / Objetoteca**: biblioteca comunitaria de objetos y herramientas compartidas con prestamos, mantenimiento y aportaciones reconocidas en TQ; disenos referenciados desde el OAD (Open Access Design) de Integral (loop CDS -> OAD -> COS -> ITC -> FRS).
 
 ## Requisitos
 

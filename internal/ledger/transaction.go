@@ -24,6 +24,7 @@ const (
 	TxTypeDebtLiberation   TxType = "debt_liberation"
 	TxTypeLimitIncrease    TxType = "limit_increase"
 	TxTypeSponsorDebt      TxType = "sponsor_debt" // debt transfer from defaulted node to sponsor
+	TxTypeCosatecaContribution TxType = "cosateca_contribution" // aporte reconocido a la cosateca/objetoteca (credito de contribucion TQ)
 )
 
 type EntryType string
