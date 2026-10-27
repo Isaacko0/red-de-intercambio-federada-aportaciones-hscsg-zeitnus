@@ -68,6 +68,7 @@ func (g *Gossip) Start(ctx context.Context) {
 			g.syncNodeLevels(ctx)
 			g.syncSponsorships(ctx)
 			g.syncDrivers(ctx)
+			g.syncCosatecaObjects(ctx)
 			g.syncFaithProfiles(ctx)
 			g.syncProfileProhibitions(ctx)
 			g.reconcileWithAllPeers(ctx)
@@ -556,4 +557,81 @@ func (g *Gossip) getFederationConfig(ctx context.Context) (*federationConfig, er
 		return nil, fmt.Errorf("getting federation config: %w", err)
 	}
 	return &cfg, nil
+	}
+
+
+
+// syncCosatecaObjects sincroniza objetos de cosateca marcados como federated_visible
+// con los peers activos. Los envia via POST a /api/federation/cosateca/sync en cada peer.
+func (g *Gossip) syncCosatecaObjects(ctx context.Context) {
+	rows, err := g.Pool.Query(ctx, `
+		SELECT id, node_domain, name, description, category, condition, status, location,
+		       design_ref, design_version, bill_of_materials, tq_value, access_tq_cost,
+		       contributed_by, contributed_at, federated_visible, images, created_at, updated_at
+		FROM cosateca_objects
+		WHERE federated_visible = true
+	`)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	type cosatecaObject struct {
+		ID               string     `json:"id"`
+		NodeDomain       string     `json:"node_domain"`
+		Name             string     `json:"name"`
+		Description      string     `json:"description"`
+		Category         string     `json:"category"`
+		Condition        string     `json:"condition"`
+		Status           string     `json:"status"`
+		Location         string     `json:"location"`
+		DesignRef        string     `json:"design_ref"`
+		DesignVersion    string     `json:"design_version"`
+		BillOfMaterials  string     `json:"bill_of_materials"`
+		TQValue          int64      `json:"tq_value"`
+		AccessTQCost     int64      `json:"access_tq_cost"`
+		ContributedBy    string     `json:"contributed_by"`
+		ContributedAt    time.Time  `json:"contributed_at"`
+		FederatedVisible bool       `json:"federated_visible"`
+		Images           string     `json:"images"`
+		CreatedAt        time.Time  `json:"created_at"`
+		UpdatedAt        time.Time  `json:"updated_at"`
+	}
+	var objects []cosatecaObject
+
+	for rows.Next() {
+		var o cosatecaObject
+		_ = rows.Scan(&o.ID, &o.NodeDomain, &o.Name, &o.Description, &o.Category,
+			&o.Condition, &o.Status, &o.Location, &o.DesignRef, &o.DesignVersion,
+			&o.BillOfMaterials, &o.TQValue, &o.AccessTQCost, &o.ContributedBy,
+			&o.ContributedAt, &o.FederatedVisible, &o.Images, &o.CreatedAt, &o.UpdatedAt)
+		objects = append(objects, o)
+	}
+
+	if len(objects) == 0 {
+		return
+	}
+
+	// Si hay un peer client, push our cosateca objects view to each active peer
+	if g.Client != nil {
+		payload, _ := json.Marshal(map[string]interface{}{
+			"from_node":  g.NodeDomain,
+			"objects":    objects,
+		})
+		peerRows, err := g.Pool.Query(ctx,
+			`SELECT peer_domain FROM node_federation_keys WHERE status = 'active'`,
+		)
+		if err == nil {
+			defer peerRows.Close()
+			for peerRows.Next() {
+				var peerDomain string
+				_ = peerRows.Scan(&peerDomain)
+				if peerDomain == g.NodeDomain {
+					continue
+				}
+				_ = g.postToPeer(ctx, peerDomain, "/api/federation/cosateca/sync", payload)
+			}
+		}
+	}
 }
+

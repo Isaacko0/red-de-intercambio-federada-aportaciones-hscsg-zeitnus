@@ -9,9 +9,12 @@
       "effort": 1,
       "value": 100,
       "dependencies": [],
-      "blocks": ["INFRA-docker", "MOTOR-tests"],
+      "blocks": [
+        "INFRA-docker",
+        "MOTOR-tests"
+      ],
       "status": "pending",
-      "notes": "Go no instalado en máquina agente. Usuario debe correr localmente. Verificar que compila investment-agent, skills, orchestrator, etc."
+      "notes": "Go no instalado en m\u00e1quina agente. Usuario debe correr localmente. Verificar que compila investment-agent, skills, orchestrator, etc."
     },
     {
       "id": "INFRA-docker",
@@ -21,8 +24,12 @@
       "priority": 85,
       "effort": 2,
       "value": 80,
-      "dependencies": ["INFRA-go-build"],
-      "blocks": ["INFRA-deploy"],
+      "dependencies": [
+        "INFRA-go-build"
+      ],
+      "blocks": [
+        "INFRA-deploy"
+      ],
       "status": "pending",
       "notes": "Adaptar docker/Dockerfile existente o crear uno nuevo para cmd/investment-agent. Incluir Ollama opcional para LLM local."
     },
@@ -34,8 +41,12 @@
       "priority": 70,
       "effort": 3,
       "value": 75,
-      "dependencies": ["INFRA-docker"],
-      "blocks": ["INFRA-monitor"],
+      "dependencies": [
+        "INFRA-docker"
+      ],
+      "blocks": [
+        "INFRA-monitor"
+      ],
       "status": "pending",
       "notes": "Opciones: VPS con Docker, Railway, Fly.io, o on-premise en nodo HSCSG. Requiere PostgreSQL para scratchpad."
     },
@@ -47,7 +58,10 @@
       "priority": 60,
       "effort": 4,
       "value": 70,
-      "dependencies": ["INFRA-deploy", "API-investment"],
+      "dependencies": [
+        "INFRA-deploy",
+        "API-investment"
+      ],
       "blocks": [],
       "status": "pending",
       "notes": "HTML templates + endpoints /api/v1/investment/state, /api/v1/investment/history. Mostrar NAV, positions, risk metrics, agent decisions."
@@ -60,62 +74,79 @@
       "priority": 90,
       "effort": 3,
       "value": 95,
-      "dependencies": ["INFRA-go-build"],
-      "blocks": ["MOTOR-backtest"],
+      "dependencies": [
+        "INFRA-go-build"
+      ],
+      "blocks": [
+        "MOTOR-backtest"
+      ],
       "status": "pending",
-      "notes": "DCF: verificar Gordon Growth con valores conocidos. Risk: verificar Sharpe/Sortino con histórico sintético. Orchestrator: verificar DAG execution order."
+      "notes": "DCF: verificar Gordon Growth con valores conocidos. Risk: verificar Sharpe/Sortino con hist\u00f3rico sint\u00e9tico. Orchestrator: verificar DAG execution order."
     },
     {
       "id": "MOTOR-backtest",
-      "title": "Backtesting histórico 2020-2026",
+      "title": "Backtesting hist\u00f3rico 2020-2026",
       "workstream": "MOTOR_IA",
       "source": "agent",
       "priority": 85,
       "effort": 5,
       "value": 90,
-      "dependencies": ["MOTOR-tests"],
-      "blocks": ["MOTOR-live"],
+      "dependencies": [
+        "MOTOR-tests"
+      ],
+      "blocks": [
+        "MOTOR-live"
+      ],
       "status": "pending",
-      "notes": "Cargar datos históricos (CoinGecko, DeFiLlama), ejecutar estrategia del agente, comparar vs benchmark (BTC, S&P500, 60/40)."
+      "notes": "Cargar datos hist\u00f3ricos (CoinGecko, DeFiLlama), ejecutar estrategia del agente, comparar vs benchmark (BTC, S&P500, 60/40)."
     },
     {
       "id": "MOTOR-live",
-      "title": "Modo live (ejecución real con límites)",
+      "title": "Modo live (ejecuci\u00f3n real con l\u00edmites)",
       "workstream": "MOTOR_IA",
       "source": "agent",
       "priority": 50,
       "effort": 5,
       "value": 85,
-      "dependencies": ["MOTOR-backtest", "LEGAL-structure"],
+      "dependencies": [
+        "MOTOR-backtest",
+        "LEGAL-structure"
+      ],
       "blocks": [],
       "status": "pending",
-      "notes": "Solo después de backtesting exitoso Y estructura legal. Límites estrictos: max 100€ iniciales, solo stablecoins, stop-loss 5%."
+      "notes": "Solo despu\u00e9s de backtesting exitoso Y estructura legal. L\u00edmites estrictos: max 100\u20ac iniciales, solo stablecoins, stop-loss 5%."
     },
     {
       "id": "MOTOR-llm-local",
-      "title": "Integración Ollama local (LLM offline)",
+      "title": "Integraci\u00f3n Ollama local (LLM offline)",
       "workstream": "MOTOR_IA",
       "source": "agent",
       "priority": 75,
       "effort": 3,
       "value": 80,
-      "dependencies": ["INFRA-go-build"],
+      "dependencies": [
+        "INFRA-go-build"
+      ],
       "blocks": [],
       "status": "pending",
       "notes": "internal/llm/provider.go ya tiene OllamaProvider. Probar con llama3.2 local. Prompt engineering para que el agente proponga inversiones racionales."
     },
     {
       "id": "MORA-risk-agent",
-      "title": "Risk Agent (evalúa exposición, propone stops)",
+      "title": "Risk Agent (eval\u00faa exposici\u00f3n, propone stops)",
       "workstream": "MOTOR_IA",
       "source": "agent",
       "priority": 80,
       "effort": 3,
       "value": 85,
-      "dependencies": ["MOTOR-tests"],
-      "blocks": ["MOTOR-live"],
+      "dependencies": [
+        "MOTOR-tests"
+      ],
+      "blocks": [
+        "MOTOR-live"
+      ],
       "status": "pending",
-      "notes": "Agente especializado en riesgo. Calcula CVaR, correlaciones, concentración. Propone stop-loss y rebalanceo. Fail-closed: si no puede evaluar, bloquea."
+      "notes": "Agente especializado en riesgo. Calcula CVaR, correlaciones, concentraci\u00f3n. Propone stop-loss y rebalanceo. Fail-closed: si no puede evaluar, bloquea."
     },
     {
       "id": "MOTOR-audit-agent",
@@ -125,10 +156,14 @@
       "priority": 70,
       "effort": 3,
       "value": 75,
-      "dependencies": ["MOTOR-tests"],
-      "blocks": ["INFRA-monitor"],
+      "dependencies": [
+        "MOTOR-tests"
+      ],
+      "blocks": [
+        "INFRA-monitor"
+      ],
       "status": "pending",
-      "notes": "Genera reportes periódicos de todas las decisiones. Publica en dashboard + opcionalmente en blockchain (inmutable). Cumple Ley III MJ."
+      "notes": "Genera reportes peri\u00f3dicos de todas las decisiones. Publica en dashboard + opcionalmente en blockchain (inmutable). Cumple Ley III MJ."
     },
     {
       "id": "API-investment",
@@ -138,49 +173,62 @@
       "priority": 65,
       "effort": 3,
       "value": 75,
-      "dependencies": ["INFRA-go-build"],
-      "blocks": ["INFRA-monitor", "API-bridge-hscsg"],
+      "dependencies": [
+        "INFRA-go-build"
+      ],
+      "blocks": [
+        "INFRA-monitor",
+        "API-bridge-hscsg"
+      ],
       "status": "pending",
       "notes": "Endpoints: GET /api/v1/investment/state, GET /api/v1/investment/history, POST /api/v1/investment/rebalance, GET /api/v1/investment/risk. Usar chi router existente."
     },
     {
       "id": "API-bridge-hscsg",
-      "title": "Puente HSCSG ↔ RIDF (priceParity, CaaS)",
+      "title": "Puente HSCSG \u2194 RIDF (priceParity, CaaS)",
       "workstream": "INTEGRACION_HSCSG",
       "source": "agent",
       "priority": 60,
       "effort": 5,
       "value": 90,
-      "dependencies": ["API-investment", "TOKENOMICS-psgshr"],
+      "dependencies": [
+        "API-investment",
+        "TOKENOMICS-psgshr"
+      ],
       "blocks": [],
       "status": "pending",
-      "notes": "Endpoint que expone NAV, yield disponible para distribución CaaS. HSCSG consulta priceParity para convertir ZNU↔USD. Rendimientos fluyen a CaaS-BM."
+      "notes": "Endpoint que expone NAV, yield disponible para distribuci\u00f3n CaaS. HSCSG consulta priceParity para convertir ZNU\u2194USD. Rendimientos fluyen a CaaS-BM."
     },
     {
       "id": "LEGAL-structure",
-      "title": "Estructura legal fondo soberano (Panamá+Cayman+Suiza)",
+      "title": "Estructura legal fondo soberano (Panam\u00e1+Cayman+Suiza)",
       "workstream": "LEGAL",
       "source": "agent",
       "priority": 40,
       "effort": 10,
       "value": 85,
       "dependencies": [],
-      "blocks": ["MOTOR-live", "TOKENOMICS-psgshr"],
+      "blocks": [
+        "MOTOR-live",
+        "TOKENOMICS-psgshr"
+      ],
       "status": "pending",
-      "notes": "Trust Panamá (perpetuidad, sin dueño) + Cayman FC (VARA, token issuer) + Swiss Association (gobernanza). Requiere abogado. Presupuesto estimado: 15-25k€."
+      "notes": "Trust Panam\u00e1 (perpetuidad, sin due\u00f1o) + Cayman FC (VARA, token issuer) + Swiss Association (gobernanza). Requiere abogado. Presupuesto estimado: 15-25k\u20ac."
     },
     {
       "id": "LEGAL-opinion",
-      "title": "Opinión legal jurisdicciones (Howey test, securities)",
+      "title": "Opini\u00f3n legal jurisdicciones (Howey test, securities)",
       "workstream": "LEGAL",
       "source": "agent",
       "priority": 45,
       "effort": 5,
       "value": 80,
       "dependencies": [],
-      "blocks": ["TOKENOMICS-psgshr"],
+      "blocks": [
+        "TOKENOMICS-psgshr"
+      ],
       "status": "pending",
-      "notes": "¿psgSHR es utility token o security? Opinión legal en 3 jurisdicciones. Si es security, requiere registro o exención (Reg D, Reg S)."
+      "notes": "\u00bfpsgSHR es utility token o security? Opini\u00f3n legal en 3 jurisdicciones. Si es security, requiere registro o exenci\u00f3n (Reg D, Reg S)."
     },
     {
       "id": "TOKENOMICS-psgshr",
@@ -190,49 +238,60 @@
       "priority": 35,
       "effort": 8,
       "value": 85,
-      "dependencies": ["LEGAL-structure", "LEGAL-opinion"],
-      "blocks": ["TOKENOMICS-bonding"],
+      "dependencies": [
+        "LEGAL-structure",
+        "LEGAL-opinion"
+      ],
+      "blocks": [
+        "TOKENOMICS-bonding"
+      ],
       "status": "pending",
-      "notes": "Security token ERC-1400. Triple utilidad: share (NAV), governance (1 token-año = 1 voto), CaaS access (AUT ≥ umbral). Rebase mensual automático."
+      "notes": "Security token ERC-1400. Triple utilidad: share (NAV), governance (1 token-a\u00f1o = 1 voto), CaaS access (AUT \u2265 umbral). Rebase mensual autom\u00e1tico."
     },
     {
       "id": "TOKENOMICS-bonding",
-      "title": "Bonding curve + anti-especulación",
+      "title": "Bonding curve + anti-especulaci\u00f3n",
       "workstream": "TOKENOMICS",
       "source": "agent",
       "priority": 30,
       "effort": 5,
       "value": 75,
-      "dependencies": ["TOKENOMICS-psgshr"],
+      "dependencies": [
+        "TOKENOMICS-psgshr"
+      ],
       "blocks": [],
       "status": "pending",
-      "notes": "Comprar a NAV (1€ = 1 share). Vender con penalty temporal decreciente (1a: 5%, 5a: 1%, 10a: 0%). Alinea compromiso temporal con estabilidad."
+      "notes": "Comprar a NAV (1\u20ac = 1 share). Vender con penalty temporal decreciente (1a: 5%, 5a: 1%, 10a: 0%). Alinea compromiso temporal con estabilidad."
     },
     {
       "id": "TOKENOMICS-onboarding",
-      "title": "Onboarding 1€/mes (fiat on-ramp → psgSHR)",
+      "title": "Onboarding 1\u20ac/mes (fiat on-ramp \u2192 psgSHR)",
       "workstream": "TOKENOMICS",
       "source": "agent",
       "priority": 25,
       "effort": 5,
       "value": 80,
-      "dependencies": ["TOKENOMICS-psgshr"],
+      "dependencies": [
+        "TOKENOMICS-psgshr"
+      ],
       "blocks": [],
       "status": "pending",
-      "notes": "Integrar Moonpay, Ramp, o similar. Usuario paga 1€ → recibe USDC → swap automático a psgSHR. KYC mínimo (Proof of Humanity?)."
+      "notes": "Integrar Moonpay, Ramp, o similar. Usuario paga 1\u20ac \u2192 recibe USDC \u2192 swap autom\u00e1tico a psgSHR. KYC m\u00ednimo (Proof of Humanity?)."
     },
     {
       "id": "SIMULADOR-montecarlo",
-      "title": "Simulador Monte Carlo 100 años",
+      "title": "Simulador Monte Carlo 100 a\u00f1os",
       "workstream": "SIMULADOR",
       "source": "agent",
       "priority": 55,
       "effort": 5,
       "value": 85,
       "dependencies": [],
-      "blocks": ["SIMULADOR-actuarial"],
+      "blocks": [
+        "SIMULADOR-actuarial"
+      ],
       "status": "pending",
-      "notes": "10,000 simulaciones con yield estocástico, inflación TQ-based, demografía miembros. Output: percentiles P5/P25/P50/P75/P95 del NAV a 100 años."
+      "notes": "10,000 simulaciones con yield estoc\u00e1stico, inflaci\u00f3n TQ-based, demograf\u00eda miembros. Output: percentiles P5/P25/P50/P75/P95 del NAV a 100 a\u00f1os."
     },
     {
       "id": "SIMULADOR-actuarial",
@@ -242,56 +301,62 @@
       "priority": 45,
       "effort": 5,
       "value": 80,
-      "dependencies": ["SIMULADOR-montecarlo"],
+      "dependencies": [
+        "SIMULADOR-montecarlo"
+      ],
       "blocks": [],
       "status": "pending",
       "notes": "Utilidad CRRA, franjas temporales (1y/10y/50y/100y), endogenous growth. Validar vs datos de fondos soberanos reales (Noruega, NZ)."
     },
     {
       "id": "SIMULADOR-dashboard",
-      "title": "Dashboard simulador (inputs → proyecciones)",
+      "title": "Dashboard simulador (inputs \u2192 proyecciones)",
       "workstream": "SIMULADOR",
       "source": "agent",
       "priority": 35,
       "effort": 4,
       "value": 70,
-      "dependencies": ["SIMULADOR-actuarial"],
+      "dependencies": [
+        "SIMULADOR-actuarial"
+      ],
       "blocks": [],
       "status": "pending",
-      "notes": "Web UI: slider miembros, aportación, yield esperado, inflación. Output: gráfica percentiles + tabla decenal. Compartible con comunidad."
-      },
-      {
-        "id": "INTEGRACION_HSCSG-cosateca",
-        "title": "Modulo Cosateca/Objetoteca: objetos, prestamos, mantenimiento y aportaciones TQ (API, migracion, frontend, docs)",
-        "workstream": "INTEGRACION_HSCSG",
-        "source": "agent",
-        "priority": 55,
-        "effort": 4,
-        "value": 80,
-        "dependencies": [],
-        "blocks": [],
-        "status": "done",
-        "notes": "Backend Go: internal/api/cosateca.go (11 endpoints autenticados), migration 171_cosateca_schema.sql, TxTypeCosatecaContribution en internal/ledger/transaction.go. Frontend: pagina /app/cosateca, locales es/en, item de nav. Docs: docs/cosateca-objetoteca.md + entrada en docs/INDEX.md. Mapea OAD/COS/FRS de Integral y TQ de Ecoaldeas Federadas; ITC y TQ no se tratan como equivalentes."
-      },
-      {
-        "id": "INTEGRACION_HSCSG-cosateca-federacion",
-        "title": "Sincronizar catalogo de objetos cosateca entre nodos federados (gossip)",
-        "workstream": "INTEGRACION_HSCSG",
-        "source": "agent",
-        "priority": 30,
-        "effort": 6,
-        "value": 70,
-        "dependencies": ["INTEGRACION_HSCSG-cosateca"],
-        "blocks": [],
-        "status": "pending",
-        "notes": "Usar columna federated_visible + gossip existente. Pendiente despues del modulo base."
-      }
+      "notes": "Web UI: slider miembros, aportaci\u00f3n, yield esperado, inflaci\u00f3n. Output: gr\u00e1fica percentiles + tabla decenal. Compartible con comunidad."
+    },
+    {
+      "id": "INTEGRACION_HSCSG-cosateca",
+      "title": "Modulo Cosateca/Objetoteca: objetos, prestamos, mantenimiento y aportaciones TQ (API, migracion, frontend, docs)",
+      "workstream": "INTEGRACION_HSCSG",
+      "source": "agent",
+      "priority": 55,
+      "effort": 4,
+      "value": 80,
+      "dependencies": [],
+      "blocks": [],
+      "status": "done",
+      "notes": "Backend Go: internal/api/cosateca.go (11 endpoints autenticados), migration 171_cosateca_schema.sql, TxTypeCosatecaContribution en internal/ledger/transaction.go. Frontend: pagina /app/cosateca, locales es/en, item de nav. Docs: docs/cosateca-objetoteca.md + entrada en docs/INDEX.md. Mapea OAD/COS/FRS de Integral y TQ de Ecoaldeas Federadas; ITC y TQ no se tratan como equivalentes."
+    },
+    {
+      "id": "INTEGRACION_HSCSG-cosateca-federacion",
+      "title": "Sincronizar catalogo de objetos cosateca entre nodos federados (gossip)",
+      "workstream": "INTEGRACION_HSCSG",
+      "source": "agent",
+      "priority": 30,
+      "effort": 4,
+      "value": 75,
+      "dependencies": [
+        "INTEGRACION_HSCSG-cosateca"
       ],
-      "userPriorities": [],
+      "blocks": [],
+      "status": "done",
+      "notes": "Sincronizaci\u00f3n de objetos cosateca entre nodos federados implementada: syncCosatecaObjects en gossip.go (ciclo de gossip + postToPeer a /api/federation/cosateca/sync), handler syncCosatecaFromPeer en internal/api/cosateca.go, ruta POST /api/federation/cosateca/sync en internal/api/routes.go. Objetos con federated_visible=true se propagan v\u00eda gossip cada 60s."
+    }
+  ],
+  "userPriorities": [],
   "lastUpdated": "2026-09-06T23:15:00Z",
   "metadata": {
     "repo": "red-de-intercambio-federada-isaacko",
     "base": "HSCSG_v15_OS + financial-services + dexter",
-    "principio": "Anfibio: extirpar infra ajena, conservar lógica, operar offline o conectado"
+    "principio": "Anfibio: extirpar infra ajena, conservar l\u00f3gica, operar offline o conectado"
   }
 }

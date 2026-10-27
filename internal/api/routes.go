@@ -302,6 +302,10 @@ func NewRouterWithAuthAndBasePath(h *Handler, ah *AuthHandlers, fh *FederationHa
 	cosatecaH := &CosatecaHandler{Pool: pool, NodeDomain: h.nodeDomain}
 	cosatecaH.RegisterRoutes(r, am)
 
+	// Federacion de cosateca: recibir objetos sincronizados desde nodos peers
+	// (llamado por el gossip de cada nodo)
+	r.Post("/api/federation/cosateca/sync", cosatecaH.syncCosatecaFromPeer)
+
 	// Merge conflicts: conflictos de fusion entre nodos
 	mergeH := &MergeConflictHandler{Pool: pool, Auth: am, nodeDomain: h.nodeDomain}
 	mergeH.RegisterRoutes(r, am)

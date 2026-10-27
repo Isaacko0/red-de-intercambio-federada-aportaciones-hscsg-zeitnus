@@ -1252,3 +1252,109 @@ func (h *CosatecaHandler) getResourceMaintenance(w http.ResponseWriter, r *http.
 	}
 	writeJSON(w, 200, map[string]interface{}{"maintenance": items, "count": len(items)})
 }
+
+
+// ---------------------------------------------------------------------------
+// Federated sync receive: recibe objetos de cosateca de nodos peers
+// ---------------------------------------------------------------------------
+
+type cosatecaSyncRequest struct {
+	FromNode string                   `json:"from_node"`
+	Objects  []cosatecaObjectSync     `json:"objects"`
+}
+
+type cosatecaObjectSync struct {
+	ID               string   `json:"id"`
+	NodeDomain       string   `json:"node_domain"`
+	Name             string   `json:"name"`
+	Description      string   `json:"description"`
+	Category         string   `json:"category"`
+	Condition        string   `json:"condition"`
+	Status           string   `json:"status"`
+	Location         string   `json:"location"`
+	DesignRef        string   `json:"design_ref"`
+	DesignVersion    string   `json:"design_version"`
+	BillOfMaterials  string   `json:"bill_of_materials"`
+	TQValue          int64    `json:"tq_value"`
+	AccessTQCost     int64    `json:"access_tq_cost"`
+	ContributedBy    string   `json:"contributed_by"`
+	ContributedAt    string   `json:"contributed_at"`
+	FederatedVisible bool     `json:"federated_visible"`
+	Images           string   `json:"images"`
+	CreatedAt        string   `json:"created_at"`
+	UpdatedAt        string   `json:"updated_at"`
+}
+
+// syncCosatecaFromPeer recibe objetos de cosateca sincronizados desde un nodo peer.
+// Los inserta o actualiza localmente (upsert por id). No requiere autenticacion de
+// usuario: es llamado entre nodos federados via gossip.
+func (h *CosatecaHandler) syncCosatecaFromPeer(w http.ResponseWriter, r *http.Request) {
+	var req cosatecaSyncRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, 400, "cuerpo de solicitud invalido")
+		return
+	}
+	if req.FromNode == "" {
+		writeError(w, 400, "from_node es requerido")
+		return
+	}
+
+	inserted := 0
+	updated := 0
+
+	for _, obj := range req.Objects {
+		if obj.ID == "" {
+			continue
+		}
+
+		// Verificar si ya existe
+		var exists bool
+		err := h.Pool.QueryRow(r.Context(), `
+			SELECT EXISTS(SELECT 1 FROM cosateca_objects WHERE id = $1)`,
+			obj.ID,
+		).Scan(&exists)
+		if err != nil {
+			continue
+		}
+
+		if exists {
+			// Actualizar solo campos que no son generados localmente
+			_, _ = h.Pool.Exec(r.Context(), `
+				UPDATE cosateca_objects SET
+					name = $2, description = $3, category = $4, condition = $5,
+					status = $6, location = $7, design_ref = $8, design_version = $9,
+					bill_of_materials = $10, tq_value = $11, access_tq_cost = $12,
+					contributed_by = $13, federated_visible = $14, images = $15,
+					updated_at = NOW()
+				WHERE id = $1`,
+				obj.ID, obj.Name, obj.Description, obj.Category, obj.Condition,
+				obj.Status, obj.Location, obj.DesignRef, obj.DesignVersion,
+				obj.BillOfMaterials, obj.TQValue, obj.AccessTQCost,
+				obj.ContributedBy, obj.FederatedVisible, obj.Images,
+			)
+			updated++
+		} else {
+			_, _ = h.Pool.Exec(r.Context(), `
+				INSERT INTO cosateca_objects
+					(id, node_domain, name, description, category, condition, status,
+					 location, design_ref, design_version, bill_of_materials, tq_value,
+					 access_tq_cost, contributed_by, federated_visible, images,
+					 created_at, updated_at)
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())`,
+				obj.ID, obj.NodeDomain, obj.Name, obj.Description, obj.Category,
+				obj.Condition, obj.Status, obj.Location, obj.DesignRef, obj.DesignVersion,
+				obj.BillOfMaterials, obj.TQValue, obj.AccessTQCost,
+				obj.ContributedBy, obj.FederatedVisible, obj.Images,
+			)
+			inserted++
+		}
+	}
+
+	writeJSON(w, 200, map[string]interface{}{
+		"status":   "synced",
+		"from_node": req.FromNode,
+		"inserted":  inserted,
+		"updated":   updated,
+	})
+}
+
