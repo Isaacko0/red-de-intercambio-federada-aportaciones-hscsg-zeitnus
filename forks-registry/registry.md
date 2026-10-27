@@ -32,6 +32,7 @@ Cada entrada debe incluir:
 | URL | Autor | Descripcion | Fecha | Licencia |
 |-----|-------|-------------|-------|----------|
 | https://github.com/discapacidad5/red-de-intercambio-federada | discapacidad5 | Repositorio Principal — Red de Intercambio Federada | 2026-01-01 | LPF-1.0 |
+| https://github.com/Isaacko0/red-de-intercambio-federada-aportaciones-hscsg-zeitnus | Isaac Ko (Isaacko0) | Port de skills de asimilacion desde Marca-Blanca-Zeitnus-Firma-Operaciones-Ecotomica-Networking-Recreativo: repo-assimilation, unified-assimilation-science, fractal-commit-fusion, gaia-alrac-assimilation, orquestador-skills, orchestrator, nfc-wallet, monetary-integration, document-architect, scientific-papers, brief-detector-recommender + OUR_SKILLS.md | 2026-10-27 | LPF-1.0 |
 
 ---
 
