@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -56,6 +57,13 @@ func (h *CosatecaHandler) RegisterRoutes(r chi.Router, am *AuthMiddleware) {
 		r.Get("/api/cosateca/contributions", h.listContributions)
 		r.Post("/api/cosateca/contributions", h.createContribution)
 		r.Post("/api/cosateca/contributions/{id}/credit", h.creditContribution)
+
+		// Endpoints compatibles con Resource Sharing spec (solarpunk_utopia_project)
+		r.Get("/api/cosateca/shared-resources", h.listSharedResources)
+		r.Get("/api/cosateca/shared-resources/{id}", h.getSharedResource)
+		r.Post("/api/cosateca/shared-resources/{id}/reserve", h.reserveSharedResource)
+		r.Post("/api/cosateca/shared-resources/{id}/return", h.returnSharedResource)
+		r.Get("/api/cosateca/shared-resources/{id}/maintenance", h.getResourceMaintenance)
 	})
 }
 
@@ -965,4 +973,282 @@ func (h *CosatecaHandler) creditContribution(w http.ResponseWriter, r *http.Requ
 		"contributor": contributorID,
 		"node_domain": h.NodeDomain,
 	})
+}
+
+// ---------------------------------------------------------------------------
+// Shared Resources (compatibilidad con Resource Sharing spec de solarpunk_utopia_project)
+// ---------------------------------------------------------------------------
+
+type sharedResource struct {
+	ID              string                   `json:"id"`
+	Name            string                   `json:"name"`
+	Description     string                   `json:"description"`
+	Type            string                   `json:"type"`
+	Condition       string                   `json:"condition"`
+	Status          string                   `json:"status"`
+	Location        string                   `json:"location"`
+	DesignRef       string                   `json:"design_ref,omitempty"`
+	TQValue         int64                    `json:"tq_value"`
+	ContributorName string                   `json:"contributor_name"`
+	AvailableAt     time.Time                `json:"available_at"`
+	CurrentLoan     *sharedResourceLoan      `json:"current_loan,omitempty"`
+	Images          json.RawMessage          `json:"images,omitempty"`
+}
+
+type sharedResourceLoan struct {
+	ID         string     `json:"id"`
+	BorrowerName string   `json:"borrower_name"`
+	DueAt      *time.Time `json:"due_at"`
+	State      string     `json:"state"`
+}
+
+func (h *CosatecaHandler) listSharedResources(w http.ResponseWriter, r *http.Request) {
+	query := `
+		SELECT o.id, o.name, o.description, o.category, o.condition, o.status,
+		       o.location, o.design_ref, o.tq_value, u.display_name, o.created_at,
+		       l.id, l.borrower_id, u2.display_name, l.due_at, l.state
+		FROM cosateca_objects o
+		LEFT JOIN users u ON u.id = o.contributed_by
+		LEFT JOIN LATERAL (
+			SELECT id, borrower_id, due_at, state
+			FROM cosateca_loans
+			WHERE object_id = o.id AND state = 'activo'
+			ORDER BY loaned_at DESC LIMIT 1
+		) l ON true
+		LEFT JOIN users u2 ON u2.id = l.borrower_id
+		WHERE o.node_domain = $1
+		ORDER BY o.created_at DESC`
+	rows, err := h.Pool.Query(r.Context(), query, h.NodeDomain)
+	if err != nil {
+		writeError(w, 500, "error listando recursos compartidos")
+		return
+	}
+	defer rows.Close()
+
+	resources := []sharedResource{}
+	for rows.Next() {
+		var res sharedResource
+		var loanID, borrowerID, borrowerName *string
+		var dueAt *time.Time
+		var loanState *string
+		var designRef sql.NullString
+		if err := rows.Scan(&res.ID, &res.Name, &res.Description, &res.Type, &res.Condition, &res.Status,
+			&res.Location, &designRef, &res.TQValue, &res.ContributorName, &res.AvailableAt,
+			&loanID, &borrowerID, &borrowerName, &dueAt, &loanState); err != nil {
+			writeError(w, 500, "error escaneando recurso")
+			return
+		}
+		if designRef.Valid {
+			res.DesignRef = designRef.String
+		}
+		if loanID != nil {
+			res.CurrentLoan = &sharedResourceLoan{
+				ID:          *loanID,
+				BorrowerName: *borrowerName,
+				DueAt:       dueAt,
+				State:       *loanState,
+			}
+		}
+		resources = append(resources, res)
+	}
+	writeJSON(w, 200, map[string]interface{}{"resources": resources, "count": len(resources)})
+}
+
+func (h *CosatecaHandler) getSharedResource(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		writeError(w, 400, "id invalido")
+		return
+	}
+	query := `
+		SELECT o.id, o.name, o.description, o.category, o.condition, o.status,
+		       o.location, o.design_ref, o.tq_value, u.display_name, o.created_at
+		FROM cosateca_objects o
+		LEFT JOIN users u ON u.id = o.contributed_by
+		WHERE o.id = $1 AND o.node_domain = $2`
+	var res sharedResource
+	var designRef sql.NullString
+	err = h.Pool.QueryRow(r.Context(), query, id, h.NodeDomain).Scan(
+		&res.ID, &res.Name, &res.Description, &res.Type, &res.Condition, &res.Status,
+		&res.Location, &designRef, &res.TQValue, &res.ContributorName, &res.AvailableAt)
+	if err == pgx.ErrNoRows {
+		writeError(w, 404, "recurso no encontrado")
+		return
+	}
+	if err != nil {
+		writeError(w, 500, "error obteniendo recurso")
+		return
+	}
+	if designRef.Valid {
+		res.DesignRef = designRef.String
+	}
+	writeJSON(w, 200, res)
+}
+
+func (h *CosatecaHandler) reserveSharedResource(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	objectID, err := uuid.Parse(idStr)
+	if err != nil {
+		writeError(w, 400, "id invalido")
+		return
+	}
+	userIDStr := r.Header.Get("X-User-ID")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		writeError(w, 401, "usuario no identificado")
+		return
+	}
+
+	var req struct {
+		DueAt *time.Time `json:"due_at"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&req)
+
+	tx, err := h.Pool.Begin(r.Context())
+	if err != nil {
+		writeError(w, 500, "error iniciando transaccion")
+		return
+	}
+	defer tx.Rollback(r.Context())
+
+	var status string
+	err = tx.QueryRow(r.Context(), `
+		SELECT status FROM cosateca_objects WHERE id = $1 AND node_domain = $2 FOR UPDATE`,
+		objectID, h.NodeDomain).Scan(&status)
+	if err == pgx.ErrNoRows {
+		writeError(w, 404, "recurso no encontrado")
+		return
+	}
+	if err != nil {
+		writeError(w, 500, "error verificando recurso")
+		return
+	}
+	if status != "disponible" {
+		writeError(w, 409, "el recurso no esta disponible")
+		return
+	}
+
+	var loanID uuid.UUID
+	err = tx.QueryRow(r.Context(), `
+		INSERT INTO cosateca_loans (object_id, borrower_id, due_at, state)
+		VALUES ($1, $2, $3, 'activo') RETURNING id`,
+		objectID, userID, req.DueAt).Scan(&loanID)
+	if err != nil {
+		writeError(w, 500, "error creando reserva")
+		return
+	}
+	if _, err := tx.Exec(r.Context(), "UPDATE cosateca_objects SET status = 'prestado', updated_at = NOW() WHERE id = $1", objectID); err != nil {
+		writeError(w, 500, "error actualizando estado del recurso")
+		return
+	}
+	if err := tx.Commit(r.Context()); err != nil {
+		writeError(w, 500, "error confirmando reserva")
+		return
+	}
+	writeJSON(w, 201, map[string]interface{}{"id": loanID.String(), "status": "reserved"})
+}
+
+func (h *CosatecaHandler) returnSharedResource(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	loanID, err := uuid.Parse(idStr)
+	if err != nil {
+		writeError(w, 400, "id invalido")
+		return
+	}
+	userIDStr := r.Header.Get("X-User-ID")
+	userID, _ := uuid.Parse(userIDStr)
+
+	tx, err := h.Pool.Begin(r.Context())
+	if err != nil {
+		writeError(w, 500, "error iniciando transaccion")
+		return
+	}
+	defer tx.Rollback(r.Context())
+
+	var objectID uuid.UUID
+	var borrowerID string
+	var state string
+	err = tx.QueryRow(r.Context(), `
+		SELECT object_id, borrower_id, state FROM cosateca_loans WHERE id = $1`,
+		loanID).Scan(&objectID, &borrowerID, &state)
+	if err == pgx.ErrNoRows {
+		writeError(w, 404, "reserva no encontrada")
+		return
+	}
+	if err != nil {
+		writeError(w, 500, "error verificando reserva")
+		return
+	}
+	if state != "activo" {
+		writeError(w, 409, "la reserva ya no esta activa")
+		return
+	}
+	if borrowerID != userID.String() {
+		writeError(w, 403, "solo quien reserves el recurso puede devolverlo")
+		return
+	}
+
+	if _, err := tx.Exec(r.Context(), `
+		UPDATE cosateca_loans SET state = 'devuelto', returned_at = NOW() WHERE id = $1`, loanID); err != nil {
+		writeError(w, 500, "error devolviendo recurso")
+		return
+	}
+	if _, err := tx.Exec(r.Context(), `
+		UPDATE cosateca_objects SET status = 'disponible', updated_at = NOW() WHERE id = $1`, objectID); err != nil {
+		writeError(w, 500, "error actualizando recurso")
+		return
+	}
+	if err := tx.Commit(r.Context()); err != nil {
+		writeError(w, 500, "error confirmando devolucion")
+		return
+	}
+	writeJSON(w, 200, map[string]interface{}{"id": idStr, "status": "returned"})
+}
+
+func (h *CosatecaHandler) getResourceMaintenance(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	objectID, err := uuid.Parse(idStr)
+	if err != nil {
+		writeError(w, 400, "id invalido")
+		return
+	}
+	query := `
+		SELECT m.id, m.type, m.description, m.parts_cost_tq, m.outcome, m.next_maintenance_at,
+		       m.performed_at, u.display_name
+		FROM cosateca_maintenance m
+		JOIN users u ON u.id = m.performed_by
+		WHERE m.object_id = $1
+		ORDER BY m.performed_at DESC`
+	rows, err := h.Pool.Query(r.Context(), query, objectID)
+	if err != nil {
+		writeError(w, 500, "error listando mantenimiento")
+		return
+	}
+	defer rows.Close()
+
+	items := []map[string]interface{}{}
+	for rows.Next() {
+		var id uuid.UUID
+		var mType, mDescription, mOutcome, mPerformedByName string
+		var mPartsCost int64
+		var mPerformedAt time.Time
+		var mNextMaintenance *time.Time
+		if err := rows.Scan(&id, &mType, &mDescription, &mPartsCost, &mOutcome,
+			&mNextMaintenance, &mPerformedAt, &mPerformedByName); err != nil {
+			writeError(w, 500, "error escaneando mantenimiento")
+			return
+		}
+		items = append(items, map[string]interface{}{
+			"id":                 id.String(),
+			"type":               mType,
+			"description":        mDescription,
+			"parts_cost_tq":      mPartsCost,
+			"outcome":            mOutcome,
+			"next_maintenance_at": mNextMaintenance,
+			"performed_at":       mPerformedAt,
+			"performed_by":       mPerformedByName,
+		})
+	}
+	writeJSON(w, 200, map[string]interface{}{"maintenance": items, "count": len(items)})
 }
